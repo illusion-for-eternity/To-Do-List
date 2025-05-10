@@ -99,3 +99,21 @@ body {
     background-color: #F9C0D3;
     border-top: 2px solid #F5A5B6;
 }
+.nav-link {
+    color: #F50057 !important;
+}
+.input-short {
+    width: 250px !important;
+}
+.button-wrapper {
+    margin-top: 100px; 
+    padding-left: 20px;
+}
+
+
+
+
+
+
+
+

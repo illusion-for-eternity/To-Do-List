@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var username = HttpContextAccessor.HttpContext.Session.GetString("Username");
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -15,13 +20,26 @@
             <div class="container">
                 <a class="navbar-brand" href="/">Homepage</a>
                 <div class="collapse navbar-collapse">
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Home/Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Home/Register">Register</a>
-                        </li>
+                    <ul class="navbar-nav ms-auto d-flex align-items-center text-end">
+                        @if (!string.IsNullOrEmpty(username))
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link">Welcome, @username!</span>
+                            </li>
+                          <li class="nav-item">
+                          <a class="nav-link" href="/Home/Logout">Logout</a>
+                          </li>
+
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Home/Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Home/Register">Register</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
@@ -32,10 +50,9 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-10">
-                    @* Використовуємо ViewContext для перевірки поточної сторінки *@
                     @if (ViewContext.RouteData.Values["action"].ToString() != "Login" && ViewContext.RouteData.Values["action"].ToString() != "Register")
                     {
-                        @Html.Partial("_Form")  @* Відображаємо форму тільки на Index *@
+                        @Html.Partial("_Form")
                     }
 
                     <main role="main" class="pb-3">
@@ -52,5 +69,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-
-
