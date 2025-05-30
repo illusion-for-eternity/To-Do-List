@@ -9,7 +9,7 @@ namespace Todo.Controllers
     {
         private const string ConnectionString = "Data Source=db.sqlite";
 
-        [HttpPost()]
+        [HttpPost]
         [Route("Home/ApiLogin")]
         public IActionResult Login([FromBody] User user)
         {
@@ -26,7 +26,7 @@ namespace Todo.Controllers
             return BadRequest(new { success = false, message = "Invalid credentials" });
         }
 
-        [HttpPost()]
+        [HttpPost]
         [Route("Home/ApiRegister")]
         public IActionResult Register([FromBody] User user)
         {
@@ -45,6 +45,70 @@ namespace Todo.Controllers
             insertCmd.ExecuteNonQuery();
 
             return Ok(new { success = true, message = "Registration successful" });
+        }
+
+        [HttpPost]
+        [Route("Home/ApiAddNote")]
+        public IActionResult AddTodo([FromBody] TodoItem item, [FromQuery] string username)
+        {
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { success = false, message = "Username is required" });
+
+            using var con = new SqliteConnection(ConnectionString);
+            con.Open();
+
+            var cmd = con.CreateCommand();
+            cmd.CommandText = $"INSERT INTO todo (name, username) VALUES ('{item.Name}', '{username}')";
+            cmd.ExecuteNonQuery();
+
+            return Ok(new { success = true, message = "Todo added successfully" });
+        }
+
+        [HttpPost]
+        [Route("Home/ApiUpdateNote")]
+        public IActionResult UpdateTodo([FromBody] TodoItem item, [FromQuery] string username)
+        {
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { success = false, message = "Username is required" });
+
+            using var con = new SqliteConnection(ConnectionString);
+            con.Open();
+
+            var cmd = con.CreateCommand();
+            cmd.CommandText = $"UPDATE todo SET name = @name WHERE Id = @id AND username = @username";
+            cmd.Parameters.AddWithValue("@id", item.Id);
+            cmd.Parameters.AddWithValue("@name", item.Name);
+            cmd.Parameters.AddWithValue("@username", username);
+
+            int rowsAffected = cmd.ExecuteNonQuery();
+
+            if (rowsAffected == 0)
+                return NotFound(new { success = false, message = "Todo not found or not owned by user" });
+
+            return Ok(new { success = true, message = "Todo updated successfully" });
+        }
+
+        [HttpPost]
+        [Route("Home/ApiDeleteNote")]
+        public IActionResult DeleteTodo([FromQuery] int id, [FromQuery] string username)
+        {
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(new { success = false, message = "Username is required" });
+
+            using var con = new SqliteConnection(ConnectionString);
+            con.Open();
+
+            var cmd = con.CreateCommand();
+            cmd.CommandText = $"DELETE FROM todo WHERE Id = @id AND username = @username";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.Parameters.AddWithValue("@username", username);
+
+            int rowsAffected = cmd.ExecuteNonQuery();
+
+            if (rowsAffected == 0)
+                return NotFound(new { success = false, message = "Todo not found or not owned by user" });
+
+            return Ok(new { success = true, message = "Todo deleted successfully" });
         }
     }
 }
