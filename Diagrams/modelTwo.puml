@@ -1,0 +1,35 @@
+@startuml
+actor User
+participant "Browser" as Browser
+participant "HomeController" as Controller
+database "SQLite DB" as Database
+
+User -> Browser : Відкриває сайт
+Browser -> Controller : GET /Home/Index
+Controller -> Browser : Перевірка сесії (Username)
+alt Username == null
+    Controller -> Browser : Redirect to /Login
+else
+    Controller -> Database : SELECT * FROM todo WHERE username = 'Username'
+    Database --> Controller : TodoItem[]
+    Controller -> Browser : View(Index.cshtml) з TodoItem[]
+end
+
+
+== Додавання задачі ==
+
+User -> Browser : Вводить нову задачу
+Browser -> Controller : POST /Home/Insert (todo.Name)
+Controller -> Browser : Отримує Username із сесії
+Controller -> Database : INSERT INTO todo (name, username)
+Database --> Controller
+Controller -> Browser : Redirect to /
+
+== Видалення задачі ==
+
+User -> Browser : Натискає Delete
+Browser -> Controller : POST /Home/Delete (id)
+Controller -> Database : DELETE FROM todo WHERE Id = id
+Database --> Controller
+Controller -> Browser : Json {}
+@enduml

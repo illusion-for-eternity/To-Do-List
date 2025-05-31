@@ -1,0 +1,55 @@
+@startuml
+actor User
+participant "Browser" as Browser
+participant "HomeController" as Controller
+database "SQLite DB" as Database
+
+== Стартова сторінка ==
+
+User -> Browser : Відкриває сайт
+Browser -> Controller : GET /Home/Index
+Controller -> Browser : Перевірка сесії (Username)
+alt Username == null
+    Controller -> Browser : Redirect to /Login
+else
+    Controller -> Database : SELECT * FROM todo WHERE username = 'Username'
+    Database --> Controller : TodoItem[]
+    Controller -> Browser : View(Index.cshtml) з TodoItem[]
+end
+
+== Вхід (Login) ==
+
+User -> Browser : Відкриває /Login
+Browser -> Controller : GET /Home/Login
+Controller -> Browser : View(Login.cshtml)
+
+User -> Browser : Вводить логін і пароль
+Browser -> Controller : POST /Home/Login (Username, Password)
+Controller -> Database : SELECT COUNT(*) FROM Users WHERE Username=... AND Password=...
+Database --> Controller : count
+alt count > 0
+    Controller -> Browser : Set Session "Username"
+    Controller -> Browser : Redirect to /Index
+else
+    Controller -> Browser : View(Login.cshtml) з помилкою
+end
+
+== Реєстрація (Register) ==
+
+User -> Browser : Відкриває /Register
+Browser -> Controller : GET /Home/Register
+Controller -> Browser : View(Register.cshtml)
+
+User -> Browser : Вводить нові дані
+Browser -> Controller : POST /Home/Register (Username, Password)
+Controller -> Database : SELECT COUNT(*) FROM Users WHERE Username = ...
+Database --> Controller : count
+alt count == 0
+    Controller -> Database : INSERT INTO Users (Username, Password)
+    Database --> Controller
+    Controller -> Browser : Redirect to /Login
+else
+    Controller -> Browser : View(Register.cshtml) з повідомленням "Користувач уже існує"
+end
+
+@enduml
