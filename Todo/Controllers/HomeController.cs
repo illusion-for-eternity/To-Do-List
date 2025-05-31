@@ -16,7 +16,7 @@ namespace Todo.Controllers
         {
             _logger = logger;
             CreateUsersTable();
-                CreateTodoTable(); // unit testing
+            CreateTodoTable(); // unit testing
         }
 
         public IActionResult Index()
@@ -29,7 +29,7 @@ namespace Todo.Controllers
             var todoListViewModel = GetAllTodos(username);
             return View(todoListViewModel);
         }
-//for unit testing
+        //for unit testing
         private void CreateTodoTable()
         {
             using var connection = new SqliteConnection(ConnectionString);
@@ -98,13 +98,19 @@ namespace Todo.Controllers
         {
             var username = HttpContext.Session.GetString("Username");
             if (string.IsNullOrEmpty(username))
+            {
+                _logger.LogWarning("Insert attempt without session user");
+                
                 return Redirect("/Home/Login");
-
+            }
             using var con = new SqliteConnection(ConnectionString);
             using var tableCmd = con.CreateCommand();
             con.Open();
             tableCmd.CommandText = $"INSERT INTO todo (name, username) VALUES ('{todo.Name}', '{username}')";
             tableCmd.ExecuteNonQuery();
+
+            _logger.LogInformation($"Todo item inserted for user {username}: {todo.Name}");
+
             return Redirect("/");
         }
 
@@ -117,6 +123,9 @@ namespace Todo.Controllers
             con.Open();
             tableCmd.CommandText = $"DELETE FROM todo WHERE Id = '{id}'";
             tableCmd.ExecuteNonQuery();
+
+            _logger.LogInformation($"Todo item with ID {id} was deleted");
+
             return Json(new { });
         }
 
@@ -127,6 +136,9 @@ namespace Todo.Controllers
             con.Open();
             tableCmd.CommandText = $"UPDATE todo SET name = '{todo.Name}' WHERE Id = '{todo.Id}'";
             tableCmd.ExecuteNonQuery();
+
+            _logger.LogInformation($"Todo item updated: ID={todo.Id}, NewName={todo.Name}");
+
             return Redirect("/");
         }
 
@@ -180,6 +192,8 @@ namespace Todo.Controllers
         [HttpPost]
         public IActionResult Login(User user)
         {
+            _logger.LogInformation($"Login attempt: {user.Username}");
+
             using var connection = new SqliteConnection(ConnectionString);
             connection.Open();
 
@@ -189,11 +203,13 @@ namespace Todo.Controllers
 
             if (count > 0)
             {
+                _logger.LogInformation($"User {user.Username} logged in successfully");
                 HttpContext.Session.SetString("Username", user.Username);  // Зберігаємо ім'я користувача в сесії
                 return RedirectToAction("Index");
             }
             else
             {
+                _logger.LogWarning($"Failed login for user: {user.Username}");
                 ViewBag.Error = "Incorrect login or password! Try again.";
                 return View();
             }
